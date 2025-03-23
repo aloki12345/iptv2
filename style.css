@@ -56,7 +56,7 @@ body {
     background: #f57c00;
 }
 
-/* التصنيفات */
+/* التصنيفات والعناصر */
 .category-buttons {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -78,7 +78,6 @@ body {
     background: #ff9800;
 }
 
-/* قائمة العناصر */
 .items-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -102,7 +101,7 @@ body {
 /* المشغل */
 .player-container {
     position: relative;
-    padding-bottom: 56.25%; /* نسب 16:9 */
+    padding-bottom: 56.25%;
     height: 0;
     margin-top: 20px;
 }
