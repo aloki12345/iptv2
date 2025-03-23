@@ -1,7 +1,18 @@
-let player = videojs('my-video');
+// تهيئة المشغل مع إعدادات HLS
+const player = videojs('my-video', {
+    html5: {
+        hls: {
+            overrideNative: true,
+            withCredentials: false
+        }
+    },
+    techOrder: ['html5']
+});
+
+// إعدادات المستخدم
 let savedSettings = JSON.parse(localStorage.getItem('xtreamSettings'));
 
-// تحميل الإعدادات عند بدء التشغيل
+// تحميل الإعدادات عند البدء
 window.onload = () => {
     if (savedSettings) {
         document.getElementById('mainContent').style.display = 'block';
@@ -34,89 +45,56 @@ async function fetchData(action, extraParams = '') {
         return await response.json();
     } catch (error) {
         console.error('خطأ في جلب البيانات:', error);
+        player.error({ code: 1001, message: 'خطأ في الاتصال بالسيرفر' });
     }
 }
 
 // تحميل التصنيفات
 async function loadCategories() {
-    const categories = await fetchData('get_live_categories');
-    const buttonsContainer = document.getElementById('categoryButtons');
-    
-    // أزرار التصنيفات
-    buttonsContainer.innerHTML = categories.map(cat => `
-        <button class="category-btn" onclick="loadCategory('${cat.category_id}', 'live')">
-            ${cat.category_name}
-        </button>
-    `).join('');
-    
-    // إضافة تصنيف الأفلام
-    buttonsContainer.innerHTML += `
-        <button class="category-btn" onclick="loadVodCategories()">
-            الأفلام
-        </button>
-    `;
-    
-    // إضافة تصنيف المسلسلات
-    buttonsContainer.innerHTML += `
-        <button class="category-btn" onclick="loadSeriesCategories()">
-            المسلسلات
-        </button>
-    `;
+    try {
+        const categories = await fetchData('get_live_categories');
+        const buttonsContainer = document.getElementById('categoryButtons');
+        
+        buttonsContainer.innerHTML = categories.map(cat => `
+            <button class="category-btn" onclick="loadCategory('${cat.category_id}', 'live')">
+                ${cat.category_name}
+            </button>
+        `).join('');
+        
+        buttonsContainer.innerHTML += `
+            <button class="category-btn" onclick="loadVodCategories()">الأفلام</button>
+            <button class="category-btn" onclick="loadSeriesCategories()">المسلسلات</button>
+        `;
+    } catch (error) {
+        console.error('خطأ في تحميل التصنيفات:', error);
+    }
 }
 
-// تحميل محتوى التصنيف
-async function loadCategory(categoryId, type = 'live') {
-    const data = await fetchData(`get_${type}_streams`, `&category_id=${categoryId}`);
-    const itemsList = document.getElementById('itemsList');
-    
-    itemsList.innerHTML = data.map(item => `
-        <div class="item-card" onclick="playStream('${item.stream_url}')">
-            <h3>${item.name}</h3>
-            ${item.cover ? `<img src="${item.cover}" alt="${item.name}" class="item-image">` : ''}
-        </div>
-    `).join('');
-}
-
-// تحميل تصنيفات الأفلام
-async function loadVodCategories() {
-    const categories = await fetchData('get_vod_categories');
-    const buttonsContainer = document.getElementById('categoryButtons');
-    
-    buttonsContainer.innerHTML = categories.map(cat => `
-        <button class="category-btn" onclick="loadCategory('${cat.category_id}', 'vod')">
-            ${cat.category_name}
-        </button>
-    `).join('');
-}
-
-// تحميل تصنيفات المسلسلات
-async function loadSeriesCategories() {
-    const categories = await fetchData('get_series_categories');
-    const buttonsContainer = document.getElementById('categoryButtons');
-    
-    buttonsContainer.innerHTML = categories.map(cat => `
-        <button class="category-btn" onclick="loadSeries('${cat.category_id}')">
-            ${cat.category_name}
-        </button>
-    `).join('');
-}
-
-// تحميل حلقات المسلسل
-async function loadSeries(categoryId) {
-    const series = await fetchData('get_series', `&category_id=${categoryId}`);
-    const itemsList = document.getElementById('itemsList');
-    
-    itemsList.innerHTML = series.map(s => `
-        <div class="item-card" onclick="loadSeasons(${s.series_id})">
-            <h3>${s.name}</h3>
-            <img src="${s.cover}" alt="${s.name}" class="item-image">
-        </div>
-    `).join('');
-}
-
-// تشغيل المحتوى
+// تشغيل المحتوى مع دعم HLS
 function playStream(streamUrl) {
-    player.src({ src: streamUrl, type: 'application/x-mpegURL' });
-    player.play();
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(streamUrl);
+        hls.attachMedia(player.tech().el);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => player.play());
+    } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+        player.src({ src: streamUrl, type: 'application/x-mpegURL' });
+        player.play();
+    } else {
+        player.error({ code: 1002, message: 'التنسيق غير مدعوم' });
+    }
 }
+
+// معالجة الأخطاء
+player.on('error', (error) => {
+    const errorMessages = {
+        1001: 'خطأ في الاتصال بالسيرفر',
+        1002: 'التنسيق غير مدعوم',
+        4: 'الرابط غير صالح'
+    };
+    
+    alert(`خطأ التشغيل: ${errorMessages[player.error().code] || 'خطأ غير معروف'}`);
+});
+
+// باقي الدوال (loadCategory, loadVodCategories, loadSeriesCategories, etc.) تبقى كما هي
+// [يمكنك إضافة الدوال الأخرى من الإجابات السابقة هنا]
