@@ -6,10 +6,15 @@
     <title>IPTV Pro</title>
     <link href="https://vjs.zencdn.net/7.11.4/video-js.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    
+    <!-- المكتبات المطلوبة -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://vjs.zencdn.net/7.11.4/video.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-hls/5.15.0/videojs-contrib-hls.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <!-- قسم إعدادات الدخول -->
+        <!-- إعدادات الدخول -->
         <div class="settings-box" id="settingsBox">
             <h2>إعدادات Xtream Codes</h2>
             <div class="form-group">
@@ -27,26 +32,21 @@
             <button onclick="saveSettings()" class="btn-save">حفظ الإعدادات</button>
         </div>
 
-        <!-- واجهة المحتوى الرئيسية -->
+        <!-- الواجهة الرئيسية -->
         <div class="content" id="mainContent" style="display: none;">
             <h1>قائمة المحتوى</h1>
-            
-            <!-- أزرار التصنيفات -->
             <div class="category-buttons" id="categoryButtons"></div>
-            
-            <!-- قائمة العناصر -->
             <div class="items-list" id="itemsList"></div>
             
-            <!-- مشغل الفيديو -->
+            <!-- مشغل الفيديو مع إعدادات HLS -->
             <div class="player-container">
-                <video id="my-video" class="video-js" controls preload="auto">
-                    <source id="videoSource" src="" type="application/x-mpegURL">
-                </video>
+                <video-js id="my-video" class="video-js vjs-default-skin" controls preload="auto">
+                    <source id="videoSource" type="application/x-mpegURL">
+                </video-js>
             </div>
         </div>
     </div>
 
-    <script src="https://vjs.zencdn.net/7.11.4/video.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
